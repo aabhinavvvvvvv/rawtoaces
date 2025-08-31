@@ -39,9 +39,8 @@ To build `rawtoaces` you would need to satisfy these dependencies:
 | -------          | -----------| -------- | -------------------------------- |
 | `cmake`          | `3.12`     | | [CMake download](https://cmake.org/download/)|
 | `ceres`          | `1.12.0`   | Ceres Solver is an open source library for solving Non-linear Least Squares problems with bounds constraints and unconstrained optimization problems. It processes non-linear regression for rawtoaces.  | [Ceres Solver installation](http://ceres-solver.org/installation.html)|
-| `boost`          | `1.76.0`   | Boost has multiple C++ libraries that support tasks related to linear algebra, multithreading, image processing, unit testing, etc. It unit testing for rawtoaces. | [Boost download](http://www.boost.org/) |
 | `OpenImageIO`    | `3.0`      | OpenImageIO is an open source library providing vast functionality for image processing. rawtoaces relies on OpenImageIO for reading raw files, saving AcesContainer files, and also all pixel operations.  | [OpenImageIO installation](https://github.com/AcademySoftwareFoundation/OpenImageIO/blob/main/INSTALL.md) |
-
+| `nlohmann-json`  | `3.6`      | nlohmann-json is a simple header-only library for parsing JSON files. | [nlohmann-json integration](https://github.com/nlohmann/json#integration) |
 
 ### MacOS
 
@@ -52,7 +51,7 @@ $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/inst
 ```
 
 ```sh
-$ brew install cmake ceres-solver imath boost  
+$ brew install cmake ceres-solver nlohmann-json openimageio
 ```
 
 ### Linux
@@ -60,17 +59,17 @@ $ brew install cmake ceres-solver imath boost
 ```sh
 $ sudo apt-get -f cmake
 $ sudo apt-get -f install \
-    libboost-dev \
-    libboost-system-dev \
-    libboost-test-dev \
-    libceres-dev
+    libceres-dev \
+    nlohmann-json3-dev \
+    libopencv-dev \
+    openimageio-tools libopenimageio-dev
 ```
 
 ### RedHat
 
 ```sh
 $ sudo yum install cmake
-$ sudo yum install eigen3-devel ceres-solver-devel boost-devel
+$ sudo yum install eigen3-devel ceres-solver-devel json-devel OpenImageIO-devel
 ```
 
 ### Windows
@@ -82,12 +81,10 @@ $ choco install cmake
 ```
 
 ```sh
-$ build_scripts/install_aces_container.bash
 $ vcpkg install \
     ceres:x64-windows \
-    boost-system:x64-windows \
-    boost-foreach:x64-windows \
-    boost-test:x64-windows
+    nlohmann-json:x64-windows \
+    openimageio:x64-windows
 ```
 
 ## Build and Install
