@@ -1825,6 +1825,7 @@ bool ImageConverter::save_image(
         "chromaticities",
         OIIO::TypeDesc( OIIO::TypeDesc::FLOAT, 8 ),
         chromaticities );
+    image_spec["oiio:ColorSpace"] = "lin_ap0_scene";
 
     auto image_output = OIIO::ImageOutput::create( "exr" );
     bool result       = image_output->open( output_filename, image_spec );
@@ -1832,6 +1833,13 @@ bool ImageConverter::save_image(
     {
         result = buf.write( image_output.get() );
     }
+    else
+    {
+        std::cerr << "ERROR: Failed to write file: " << output_filename
+                  << std::endl
+                  << "Error: " << image_output->geterror() << std::endl;
+    }
+
     return result;
 }
 
