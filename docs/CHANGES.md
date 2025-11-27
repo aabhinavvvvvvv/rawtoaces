@@ -1,3 +1,64 @@
+
+Release 2.0.0 (September ?? 2025) -- compared to 1.1.0
+--------------------------------------------------------
+
+**This version is not API- or ABI-compatible with the previous versions.**
+
+### MAIN CHANGES:
+
+#### The core library (rawtoaces-idt):
+
+- The core library has been renamed from `rawtoaces_idt` to `rawtoaces_core`.
+- The `Idt` class has been renamed to `rta::core::SpectralSolver`, the public interface of the class has been cleaned up. Refer to [core_usage.cpp](../tests/core_usage.cpp) for usage examples.
+- The `DNGIdt` class has been renamed to `rta::core::MetadataSolver`, the public interface of the class has been cleaned up. Refer to [util_usage.cpp](../tests/util_usage.cpp) for usage examples.
+- Reshaping of spectral data has been added, so camera curves with other than 380..780nm with 5nm step sampling can be used.
+- The dependency on boost::json has been removed in favour of nlohmann-json.
+
+#### The util library (rawtoaces-util):
+
+- The `AcesRender` class has been renamed to `rta::util::ImageConverter`, the public interface of the class has been cleaned up.
+- The dependency on Libraw has been removed in favour of OpenImageIO.
+- The dependency on AcesContainer has been removed in favour of OpenImageIO.
+- The proprietary command line parcer has been replaced with OpenImageIO.
+
+#### The command line tool (rawtoaces):
+
+- Because of the new command line parser, all command line parameters have been changed. Please refer to `rawtoaces --help`, or [README](../README.md) for more info.
+- The switch to using OpenImageIO instead of Libraw directly required us to drop some optional command line parameters, since those options are not exposed in OpenImageIO yet. We had to drop the functionality, like providing black frames or dead pixel masks, etc. We will look at reintroducing those options on the OpenImageIO side in the future, if a need arises. Here is the list of dropped parameters:
+  - `-P` - bad pixel mask
+  - `-K` - dark frame
+  - `-j` - fuji-rotate
+  - `-m` - median filter
+  - `-f` - four-colour RGB
+  - `-T` - print Libraw-supported cameras
+  - `-F` - use big file
+  - `-s` - image index in the file
+  - `-G` - green_matching() filter
+- Functionality added: multiple crop modes supported via `--crop-mode`.
+- Functionality added: specify output directories via `--output-dir`.
+- Functionality added: automatically create missing output directories via `--create-dirs`.
+- Functionality changed: `rawtoaces` does not overwrite existing files by default any more. Use `--overwrite` to override.
+
+#### Other:
+- Removed dependencies: boost, Libraw, AcesContainer.
+- Added dependencies: OpenImageIO, nlohmann-json.
+- The data files are now being installed into `/usr/local/share`, not `/usr/local/include`. The old path is still being resolved for backward compatibility.
+
+### All changes:
+
+- *feat*: Implement a data class for storing spectral curves, replace boost:json with nlohmann-json [#164](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/164)
+- *fix*: install to /usr/local/share, not /usr/local/include [#172](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/172)
+- *fix*: reading of data folders from env [#171](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/171)
+- *refactor*: remove dependency on Libraw from the core library [#162](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/162)
+- *refactor*: rename rawtoaces_idt to rawtoaces_core [#160](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/160)
+- *refactor*: cleanup public interfaces [#159](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/159), [#169](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/169), [#173](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/173)
+- *refactor*: refactor the usage timer [#165](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/165), [#166](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/166)
+- *deps*: replace libraw and aces_container with OIIO [#167](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/167)
+- *deps*: replace proprietary command line parser with OIIO [#168](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/168)
+- *deps*: replace boost::unittest with oiio::unittest [#170](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/170)
+- *deps*: replace boost::filesystem with std::filesystem [#161](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/161)
+- *ci*: fix CI broken on aswf-2024+ images [#163](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/163)
+
 Release 1.1.0 (August 11 2025) -- compared to 1.0.0
 --------------------------------------------------------
 - *feat*: Implement custom matrix mode [#109](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/109)
