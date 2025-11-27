@@ -4,6 +4,7 @@ by first name.
 - Aleksandr Motsjonov (@soswow)
 - Alexander Forsythe (@aforsythe)
 - Anton Dukhovnikov (@antond-weta)
+- Anthony Yin (@hyi18)
 - Jean-Francois Panisset (@jfpanisset)
 - Joel Brun (@joelBrun)
 - Jonathan Chang (@jonchang)
@@ -18,4 +19,5 @@ by first name.
 - Thomas Mansencal (@KelSolaar)
 - @andyp6
 - @kisakata
+- @rodeka
 - @splidje

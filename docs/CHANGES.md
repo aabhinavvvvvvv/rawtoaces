@@ -1,5 +1,5 @@
 
-Release 2.0.0 (September ?? 2025) -- compared to 1.1.0
+Release 2.0.0 (December ?? 2025) -- compared to 1.1.0
 --------------------------------------------------------
 
 **This version is not API- or ABI-compatible with the previous versions.**
@@ -43,12 +43,18 @@ Release 2.0.0 (September ?? 2025) -- compared to 1.1.0
 - Removed dependencies: boost, Libraw, AcesContainer.
 - Added dependencies: OpenImageIO, nlohmann-json.
 - The data files are now being installed into `/usr/local/share`, not `/usr/local/include`. The old path is still being resolved for backward compatibility.
+- The database (external rawtoaces-data repo) dependency has been switched to v1.0.0, which changes the data schema version to v1.0.0 and adds multiple new camera measurements, see  
 
 ### All changes:
 
-- *feat*: Implement a data class for storing spectral curves, replace boost:json with nlohmann-json [#164](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/164)
+- *feat*: implement a data class for storing spectral curves, replace boost:json with nlohmann-json [#164](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/164)
+- *feat*: add `--data-dir` argument and `auto` matrix method [#189](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/189)
+- *feat*: Python bindings - WIP, not fully functional yet [#205](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/205), [#208](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/208)
+- *api*: further tweaks to the public API [#178](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/178), [#183](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/183), [#215](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/215), [#219](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/219) 
+- *api*: switch to rawtoaces-data v1.0.0 which also bumps the supported data schema version to v1.0.0 [#221](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/221)
 - *fix*: install to /usr/local/share, not /usr/local/include [#172](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/172)
 - *fix*: reading of data folders from env [#171](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/171)
+- *fix*: fix command line parsing error [186](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/186)
 - *refactor*: remove dependency on Libraw from the core library [#162](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/162)
 - *refactor*: rename rawtoaces_idt to rawtoaces_core [#160](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/160)
 - *refactor*: cleanup public interfaces [#159](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/159), [#169](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/169), [#173](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/173)
@@ -58,6 +64,14 @@ Release 2.0.0 (September ?? 2025) -- compared to 1.1.0
 - *deps*: replace boost::unittest with oiio::unittest [#170](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/170)
 - *deps*: replace boost::filesystem with std::filesystem [#161](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/161)
 - *ci*: fix CI broken on aswf-2024+ images [#163](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/163)
+- *ci*: various CI fixes [#179](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/179), [#209](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/209), [#210](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/210), [#213](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/213), [#214](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/214), [#217](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/217) 
+- *ci*: improve Windows CI performance by caching [#218](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/218)
+- *tests*: improve unittest coverage [#190](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/190), [#192](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/192), [#193](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/193), [#194](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/194), [#200](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/200), [#207](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/207), [#212](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/212), [#216](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/216)
+- *tests*: test coverage report with badge and logo by [#188](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/188)
+- *analysis*: add static analysis [#206](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/206), [#211](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/211)
+- *build*: fix build issues caused by the order of OIIO includes [#198](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/198)
+- *cleanup*: code cleanup [#174](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/174), [#182](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/182), [#185](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/185), [#195](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/195), [#197](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/197)
+- *admin* Add CONTRIBUTING and other documents [#199](https://github.com/AcademySoftwareFoundation/rawtoaces/pull/199)
 
 Release 1.1.0 (August 11 2025) -- compared to 1.0.0
 --------------------------------------------------------
