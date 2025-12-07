@@ -11,6 +11,7 @@
 
 #include "../src/rawtoaces_core/mathOps.h"
 #include <rawtoaces/rawtoaces_core.h>
+#include "test_utils.h"
 
 #define DATA_PATH "../_deps/rawtoaces_data-src/data/"
 
@@ -239,11 +240,345 @@ void testSpectralData_LoadSpst()
     }
 }
 
+/// Helper template function to test binary operators
+/// @param a First input spectrum
+/// @param b Second input spectrum
+/// @param spectrum_op Function that performs the Spectrum operator
+/// @param check_op Function that calculates expected value
+template <typename SpectrumOp, typename CheckOp>
+void check_binary_operator_result(
+    const rta::core::Spectrum &a,
+    const rta::core::Spectrum &b,
+    SpectrumOp                 spectrum_op,
+    CheckOp                    check_op )
+{
+    rta::core::Spectrum result = spectrum_op( a, b );
+    OIIO_CHECK_EQUAL( result.shape.first, a.shape.first );
+    OIIO_CHECK_EQUAL( result.shape.last, a.shape.last );
+    OIIO_CHECK_EQUAL( result.shape.step, a.shape.step );
+    OIIO_CHECK_EQUAL( result.values.size(), a.values.size() );
+    for ( size_t i = 0; i < result.values.size(); i++ )
+    {
+        double expected = check_op( a.values[i], b.values[i] );
+        OIIO_CHECK_EQUAL_THRESH( result.values[i], expected, 1e-10 );
+    }
+}
+
+/// Helper template function to test compound assignment operators
+/// @param original The original spectrum before modification
+/// @param b Second input spectrum
+/// @param spectrum_op Function that performs the Spectrum compound assignment
+/// @param check_op Function that calculates expected value
+template <typename SpectrumOp, typename CheckOp>
+void check_compound_assignment_operator_result(
+    const rta::core::Spectrum &original,
+    const rta::core::Spectrum &b,
+    SpectrumOp                 spectrum_op,
+    CheckOp                    check_op )
+{
+    rta::core::Spectrum  modified   = original;
+    rta::core::Spectrum &result_ref = spectrum_op( modified, b );
+    OIIO_CHECK_EQUAL(
+        &result_ref, &modified ); /// Should return reference to self
+    for ( size_t i = 0; i < modified.values.size(); i++ )
+    {
+        double expected = check_op( original.values[i], b.values[i] );
+        OIIO_CHECK_EQUAL_THRESH( modified.values[i], expected, 1e-10 );
+    }
+}
+
+void testSpectralData_Operators()
+{
+    /// Create two spectra with known values for testing
+    rta::core::Spectrum a( 2.0 );
+    rta::core::Spectrum b( 3.0 );
+
+    /// Initialize with specific values for easier verification
+    for ( size_t i = 0; i < a.values.size(); i++ )
+    {
+        a.values[i] = 2.0 + static_cast<double>( i );
+        b.values[i] = 3.0 + static_cast<double>( i ) * 2.0;
+    }
+
+    /// Test binary operator+ (addition)
+    {
+        check_binary_operator_result(
+            a,
+            b,
+            []( const rta::core::Spectrum &x, const rta::core::Spectrum &y ) {
+                return x + y;
+            },
+            []( double x, double y ) { return x + y; } );
+    }
+
+    /// Test binary operator- (subtraction)
+    {
+        check_binary_operator_result(
+            a,
+            b,
+            []( const rta::core::Spectrum &x, const rta::core::Spectrum &y ) {
+                return x - y;
+            },
+            []( double x, double y ) { return x - y; } );
+    }
+
+    /// Test binary operator* (multiplication)
+    {
+        check_binary_operator_result(
+            a,
+            b,
+            []( const rta::core::Spectrum &x, const rta::core::Spectrum &y ) {
+                return x * y;
+            },
+            []( double x, double y ) { return x * y; } );
+    }
+
+    /// Test binary operator/ (division)
+    {
+        check_binary_operator_result(
+            a,
+            b,
+            []( const rta::core::Spectrum &x, const rta::core::Spectrum &y ) {
+                return x / y;
+            },
+            []( double x, double y ) { return x / y; } );
+    }
+
+    /// Test compound assignment operator+= (addition)
+    {
+        check_compound_assignment_operator_result(
+            a,
+            b,
+            []( rta::core::Spectrum &x, const rta::core::Spectrum &y )
+                -> rta::core::Spectrum & { return x += y; },
+            []( double x, double y ) { return x + y; } );
+    }
+
+    /// Test compound assignment operator-= (subtraction)
+    {
+        check_compound_assignment_operator_result(
+            a,
+            b,
+            []( rta::core::Spectrum &x, const rta::core::Spectrum &y )
+                -> rta::core::Spectrum & { return x -= y; },
+            []( double x, double y ) { return x - y; } );
+    }
+
+    /// Test compound assignment operator*= (multiplication)
+    {
+        check_compound_assignment_operator_result(
+            a,
+            b,
+            []( rta::core::Spectrum &x, const rta::core::Spectrum &y )
+                -> rta::core::Spectrum & { return x *= y; },
+            []( double x, double y ) { return x * y; } );
+    }
+
+    /// Test compound assignment operator/= (division)
+    {
+        check_compound_assignment_operator_result(
+            a,
+            b,
+            []( rta::core::Spectrum &x, const rta::core::Spectrum &y )
+                -> rta::core::Spectrum & { return x /= y; },
+            []( double x, double y ) { return x / y; } );
+    }
+}
+
+void testSpectralData_ReshapeInterpolation()
+{
+    /// Create a spectrum with a different shape that will require interpolation
+    /// Source: 380-400 nm with step 10 (so samples at 380, 390, 400)
+    /// Target: ReferenceShape 380-780 nm with step 5 (so samples at 380, 385, 390, 395, 400, ...)
+    /// This will trigger interpolation at 385 (between 380 and 390) and 395 (between 390 and 400)
+    rta::core::Spectrum::Shape source_shape = { 380, 400, 10 };
+    rta::core::Spectrum        spectrum( 0.0, source_shape );
+
+    /// Set known values
+    spectrum.values[0] = 10.0; /// Value at 380 nm
+    spectrum.values[1] = 20.0; /// Value at 390 nm
+    spectrum.values[2] = 30.0; /// Value at 400 nm
+
+    /// Verify initial shape
+    OIIO_CHECK_EQUAL( spectrum.shape.first, 380 );
+    OIIO_CHECK_EQUAL( spectrum.shape.last, 400 );
+    OIIO_CHECK_EQUAL( spectrum.shape.step, 10 );
+    OIIO_CHECK_EQUAL( spectrum.values.size(), 3 );
+
+    /// Reshape to ReferenceShape (380-780, step 5)
+    spectrum.reshape();
+
+    /// Verify shape changed to ReferenceShape
+    OIIO_CHECK_EQUAL( spectrum.shape.first, 380 );
+    OIIO_CHECK_EQUAL( spectrum.shape.last, 780 );
+    OIIO_CHECK_EQUAL( spectrum.shape.step, 5 );
+    OIIO_CHECK_EQUAL(
+        spectrum.values.size(),
+        ( 780 - 380 + 5 ) / 5 ); /// Should be 81 samples
+
+    /// Test exact matches (no interpolation needed)
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[0], 10.0, 1e-10 ); /// 380 nm - exact match
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[2], 20.0, 1e-10 ); /// 390 nm - exact match
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[4], 30.0, 1e-10 ); /// 400 nm - exact match
+
+    /// Test interpolation at 385 nm (between 380 and 390)
+    /// ratio = (385 - 380) / (390 - 380) = 5 / 10 = 0.5
+    /// expected = 10.0 * (1.0 - 0.5) + 20.0 * 0.5 = 15.0
+    double expected_385 = 10.0 * ( 1.0 - 0.5 ) + 20.0 * 0.5;
+    OIIO_CHECK_EQUAL_THRESH( spectrum.values[1], expected_385, 1e-10 );
+
+    /// Test interpolation at 395 nm (between 390 and 400)
+    /// ratio = (395 - 390) / (400 - 390) = 5 / 10 = 0.5
+    /// expected = 20.0 * (1.0 - 0.5) + 30.0 * 0.5 = 25.0
+    double expected_395 = 20.0 * ( 1.0 - 0.5 ) + 30.0 * 0.5;
+    OIIO_CHECK_EQUAL_THRESH( spectrum.values[3], expected_395, 1e-10 );
+
+    /// Test a more complex interpolation case with non-0.5 ratio
+    /// Create another spectrum with step 15 to get more interesting ratios
+    rta::core::Spectrum::Shape source_shape2 = { 380, 410, 15 };
+    rta::core::Spectrum        spectrum2( 0.0, source_shape2 );
+
+    /// Set values: [100.0, 200.0, 300.0] at wavelengths 380, 395, 410
+    spectrum2.values[0] = 100.0; /// Value at 380 nm
+    spectrum2.values[1] = 200.0; /// Value at 395 nm
+    spectrum2.values[2] = 300.0; /// Value at 410 nm
+
+    spectrum2.reshape();
+
+    /// Test interpolation at 390 nm (between 380 and 395)
+    /// ratio = (390 - 380) / (395 - 380) = 10 / 15 = 2/3 ≈ 0.6667
+    /// expected = 100.0 * (1/3) + 200.0 * (2/3)
+    ///          = 100/3 + 400/3 = 500/3 ≈ 166.6667
+    double ratio_390    = ( 390.0 - 380.0 ) / ( 395.0 - 380.0 );
+    double expected_390 = 100.0 * ( 1.0 - ratio_390 ) + 200.0 * ratio_390;
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum2.values[2], expected_390, 1e-10 ); /// Index 2 = 390 nm
+}
+
+void testSpectralData_ReshapeBeforeSourceRange()
+{
+    /// Test the case where source spectrum starts after ReferenceShape first wavelength
+    /// Source: 400-450 nm with step 10 (so samples at 400, 410, 420, 430, 440, 450)
+    /// Target: ReferenceShape 380-780 nm with step 5
+    /// For wavelengths 380, 385, 390, 395 nm, we haven't reached source range yet,
+    /// so we copy the first source value (values[0])
+    rta::core::Spectrum::Shape source_shape = { 400, 450, 10 };
+    rta::core::Spectrum        spectrum( 0.0, source_shape );
+
+    /// Set known values
+    spectrum.values[0] = 100.0; /// Value at 400 nm
+    spectrum.values[1] = 200.0; /// Value at 410 nm
+    spectrum.values[2] = 300.0; /// Value at 420 nm
+    spectrum.values[3] = 400.0; /// Value at 430 nm
+    spectrum.values[4] = 500.0; /// Value at 440 nm
+    spectrum.values[5] = 600.0; /// Value at 450 nm
+
+    /// Verify initial shape
+    OIIO_CHECK_EQUAL( spectrum.shape.first, 400 );
+    OIIO_CHECK_EQUAL( spectrum.shape.last, 450 );
+    OIIO_CHECK_EQUAL( spectrum.shape.step, 10 );
+    OIIO_CHECK_EQUAL( spectrum.values.size(), 6 );
+
+    /// Reshape to ReferenceShape (380-780, step 5)
+    spectrum.reshape();
+
+    /// Verify shape changed to ReferenceShape
+    OIIO_CHECK_EQUAL( spectrum.shape.first, 380 );
+    OIIO_CHECK_EQUAL( spectrum.shape.last, 780 );
+    OIIO_CHECK_EQUAL( spectrum.shape.step, 5 );
+    OIIO_CHECK_EQUAL(
+        spectrum.values.size(),
+        ( 780 - 380 + 5 ) / 5 ); /// Should be 81 samples
+
+    /// Test that wavelengths before source range (380, 385, 390, 395) get first source value
+    /// These should all copy values[0] = 100.0 because wl_src (400) > wl_dst
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[0], 100.0, 1e-10 ); /// 380 nm - before source range
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[1], 100.0, 1e-10 ); /// 385 nm - before source range
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[2], 100.0, 1e-10 ); /// 390 nm - before source range
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[3], 100.0, 1e-10 ); /// 395 nm - before source range
+
+    /// Test exact match at 400 nm (first source wavelength)
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[4], 100.0, 1e-10 ); /// 400 nm - exact match
+
+    /// Test exact match at 410 nm
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[6], 200.0, 1e-10 ); /// 410 nm - exact match
+
+    /// Test exact match at 420 nm
+    OIIO_CHECK_EQUAL_THRESH(
+        spectrum.values[8], 300.0, 1e-10 ); /// 420 nm - exact match
+}
+
+void testSpectralData_Max()
+{
+    /// Test max() function with empty spectrum
+    /// Create an empty spectrum using EmptyShape
+    rta::core::Spectrum empty_spectrum( 0.0, rta::core::Spectrum::EmptyShape );
+
+    /// Verify it's empty
+    OIIO_CHECK_EQUAL( empty_spectrum.values.size(), 0 );
+    OIIO_CHECK_EQUAL( empty_spectrum.shape.first, 0 );
+    OIIO_CHECK_EQUAL( empty_spectrum.shape.last, 0 );
+    OIIO_CHECK_EQUAL( empty_spectrum.shape.step, 0 );
+
+    /// Test that max() returns 0 for empty spectrum
+    double max_value = empty_spectrum.max();
+    OIIO_CHECK_EQUAL( max_value, 0.0 );
+
+    /// Also test with a non-empty spectrum to ensure max() works correctly
+    rta::core::Spectrum non_empty( 0.0 );
+    non_empty.values[0] = 5.0;
+    non_empty.values[1] = 10.0;
+    non_empty.values[2] = 3.0;
+    non_empty.values[3] = 15.0;
+    non_empty.values[4] = 7.0;
+
+    double max_value_non_empty = non_empty.max();
+    OIIO_CHECK_EQUAL( max_value_non_empty, 15.0 );
+}
+
+void testSpectralData_LoadFileNotFound()
+{
+    /// Test load() function with a non-existent file
+    rta::core::SpectralData data;
+    std::string non_existent_path = "/nonexistent/path/to/file.json";
+
+    /// Capture stderr output
+    std::string stderr_output = capture_stderr( [&]() {
+        bool result = data.load( non_existent_path );
+        OIIO_CHECK_EQUAL(
+            result, false ); /// Should return false for non-existent file
+    } );
+
+    /// Verify error message was printed
+    std::string expected_error =
+        "Error: Failed to open file " + non_existent_path + ".\n";
+    OIIO_CHECK_EQUAL( stderr_output, expected_error );
+
+    /// Verify data was reset (all fields should be empty)
+    OIIO_CHECK_EQUAL( data.manufacturer, "" );
+    OIIO_CHECK_EQUAL( data.model, "" );
+    OIIO_CHECK_EQUAL( data.data.size(), 0 );
+}
+
 int main( int, char ** )
 {
     testSpectralData_Spectrum();
     testSpectralData_Properties();
     testSpectralData_LoadSpst();
+    testSpectralData_Operators();
+    testSpectralData_ReshapeInterpolation();
+    testSpectralData_ReshapeBeforeSourceRange();
+    testSpectralData_Max();
+    testSpectralData_LoadFileNotFound();
 
     return unit_test_failures;
 }
