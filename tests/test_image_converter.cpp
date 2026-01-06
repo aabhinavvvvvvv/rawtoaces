@@ -397,6 +397,32 @@ void test_collect_image_files_mixed_valid_invalid_paths()
     OIIO_CHECK_EQUAL( batches[1].size(), 1 );
 }
 
+/// Tests parsing of RAW extensions from a mixed OIIO extension list
+void test_parse_raw_extensions()
+{
+    std::cout << std::endl << "test_parse_raw_extensions()" << std::endl;
+
+    // Mixed valid and invalid entries
+    const std::string extensionlist =
+        "raw:cr2,NEF,dng;"
+        "jpeg:jpg,jpeg;"
+        "invalidentry;"
+        "raw:RAF";
+
+    const std::set<std::string> exts =
+        rta::util::parse_raw_extensions( extensionlist );
+
+    // Should include only RAW extensions, normalized
+    OIIO_CHECK_EQUAL( exts.count( ".cr2" ), 1 );
+    OIIO_CHECK_EQUAL( exts.count( ".nef" ), 1 );
+    OIIO_CHECK_EQUAL( exts.count( ".dng" ), 1 );
+    OIIO_CHECK_EQUAL( exts.count( ".raf" ), 1 );
+
+    // Should exclude non-RAW formats
+    OIIO_CHECK_EQUAL( exts.count( ".jpg" ), 0 );
+    OIIO_CHECK_EQUAL( exts.count( ".jpeg" ), 0 );
+}
+
 /// Tests database_paths with no environment variables set (uses default paths)
 void test_database_paths_default()
 {
@@ -646,6 +672,39 @@ std::string run_rawtoaces_with_data_dir(
     }
 
     return output;
+}
+
+/// This test verifies that when --list-formats is provided, the method
+/// outputs the list of supported RAW input formats and then exits
+void test_parse_parameters_list_formats()
+{
+    std::cout << std::endl
+              << "test_parse_parameters_list_formats()" << std::endl;
+
+    std::vector<std::string> args   = { "--list-formats" };
+    std::string              output = run_rawtoaces_command( args );
+
+    std::vector<std::string> lines;
+    OIIO::Strutil::split( output, lines, "\n" );
+
+    // Check for a few well-known RAW formats
+    bool found_cr2 = false;
+    bool found_dng = false;
+    bool found_png = false;
+
+    for ( const auto &line: lines )
+    {
+        if ( line == ".cr2" )
+            found_cr2 = true;
+        if ( line == ".dng" )
+            found_dng = true;
+        if ( line == ".png" )
+            found_png = true;
+    }
+
+    OIIO_CHECK_EQUAL( found_cr2, true );
+    OIIO_CHECK_EQUAL( found_dng, true );
+    OIIO_CHECK_EQUAL( found_png, false );
 }
 
 /// This test verifies that when --list-cameras is provided, the method
@@ -2096,6 +2155,9 @@ int main( int, char ** )
         test_collect_image_files_multiple_paths();
         test_collect_image_files_mixed_valid_invalid_paths();
 
+        // Tests for raw extensions
+        test_parse_raw_extensions();
+
         // Tests for database_paths
         test_database_paths_default();
         test_database_paths_rawtoaces_env();
@@ -2114,6 +2176,7 @@ int main( int, char ** )
         test_fix_metadata_unsupported_type();
 
         // Tests for parse_parameters
+        test_parse_parameters_list_formats();
         test_parse_parameters_list_cameras();
         test_parse_parameters_list_cameras( true );
         test_parse_parameters_list_illuminants();
