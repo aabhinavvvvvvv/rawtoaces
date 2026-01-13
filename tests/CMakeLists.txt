@@ -70,6 +70,7 @@ add_test ( NAME Test_SpectralData COMMAND Test_SpectralData )
 add_executable (
 	Test_IDT
 	testIDT.cpp
+	test_utils.cpp
 )
 
 target_link_libraries(
@@ -104,6 +105,7 @@ add_test ( NAME Test_Illum COMMAND Test_Illum )
 add_executable (
 	Test_DNGIdt
 	testDNGIdt.cpp
+	test_utils.cpp
 )
 
 target_link_libraries(
@@ -191,6 +193,7 @@ add_executable (
 	Test_ImageConverter
 	test_image_converter.cpp
 	test_utils.cpp
+	test_utils_image_converter.cpp
 )
 
 target_link_libraries(

@@ -25,6 +25,7 @@
 #include <algorithm>
 
 #include "test_utils.h"
+#include "test_utils_image_converter.h"
 
 #ifdef WIN32
 #    include <io.h>
@@ -1352,10 +1353,14 @@ void test_find_illuminant_camera_wrong_size()
 
     // Create test directory with database (with incorrect camera data)
     TestFixture fixture;
-    auto       &test_dir = fixture.with_camera( "Test", "Camera", true )
+    auto       &test_dir = fixture
+                         .with_camera(
+                             "Test",
+                             "Camera",
+                             nlohmann::json::array( { "R", "G", "B", "D" } ) )
                          .without_training()
                          .without_observer()
-                         .build(); // is_incorrect_data = true
+                         .build(); // incorrect channel count
 
     std::vector<std::string>  database_path = { test_dir.get_database_path() };
     rta::core::SpectralSolver solver( database_path );
@@ -2003,9 +2008,11 @@ void test_prepare_transform_spectral_wb_calculation_fail_due_to_invalid_illumina
 
     // Create test directory with database (with invalid illuminant)
     TestFixture fixture;
-    auto       &test_dir = fixture.with_camera( "Blackmagic", "Cinema Camera" )
-                         .with_illuminant( "4200", true )
-                         .build(); // is_incorrect = true
+    auto       &test_dir =
+        fixture.with_camera( "Blackmagic", "Cinema Camera" )
+            .with_illuminant(
+                "4200", nlohmann::json::array( { "power", "power2" } ) )
+            .build(); // incorrect channel count
 
     // Build command
     auto args = CommandBuilder()
@@ -2038,12 +2045,13 @@ void test_prepare_transform_spectral_wb_calculation_fail_due_to_invalid_camera_d
 
     // Create test directory with database (with invalid camera)
     TestFixture fixture;
-    auto       &test_dir =
-        fixture
-            .with_camera(
-                "Blackmagic", "Cinema Camera", true ) // is_incorrect = true
-            .with_illuminant( "4200" )
-            .build();
+    auto       &test_dir = fixture
+                         .with_camera(
+                             "Blackmagic",
+                             "Cinema Camera",
+                             nlohmann::json::array( { "R", "G", "B", "D" } ) )
+                         .with_illuminant( "4200" )
+                         .build();
 
     // Build command
     auto args = CommandBuilder()
