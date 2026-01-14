@@ -1160,6 +1160,10 @@ void test_database_location_not_directory_warning()
     settings.illuminant           = ""; // Empty to trigger auto-detection
     settings.verbosity            = 1;  // > 0 to trigger the warning
 
+    // Make sure the transform is not in the cache, otherwise DB look up
+    // will no be triggered.
+    settings.disable_cache = true;
+
     // Provide WB_multipliers
     std::vector<double>              WB_multipliers = { 1.5, 1.0, 1.2, 1.0 };
     std::vector<std::vector<double>> IDT_matrix;
