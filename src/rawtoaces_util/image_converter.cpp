@@ -1278,14 +1278,9 @@ bool ImageConverter::configure(
     }
 
     fix_metadata( image_spec );
-    bool config_result = configure( image_spec, options );
-    if ( !config_result )
-    {
-        // status is already set by the other configure method
-        return false;
-    }
-    status = Status::Success;
-    return true;
+    // Delegate to the ImageSpec overload, which is responsible for
+    // setting the appropriate status (both success and error cases).
+    return configure( image_spec, options );
 }
 
 // TODO:
