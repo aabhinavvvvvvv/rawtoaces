@@ -29,7 +29,8 @@ bool prepare_transform_spectral(
     const ImageConverter::Settings   &settings,
     std::vector<double>              &WB_multipliers,
     std::vector<std::vector<double>> &IDT_matrix,
-    std::vector<std::vector<double>> &CAT_matrix );
+    std::vector<std::vector<double>> &CAT_matrix,
+    std::string                      &error_message );
 
 } // namespace util
 } // namespace rta
