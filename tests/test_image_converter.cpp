@@ -41,6 +41,8 @@ using namespace rta::util;
 const std::string dng_test_file =
     "../../tests/materials/blackmagic_cinema_camera_cinemadng.dng";
 
+const std::string nef_test_file = "../../tests/materials/BatteryPark.NEF";
+
 std::string convert_linux_path_to_windows_path( const std::string &path )
 {
     std::vector<std::string> segments;
@@ -124,41 +126,15 @@ std::string run_rawtoaces_command(
     return output;
 }
 
-// Cross-platform environment variable helpers
-/*
-Standard C Library vs POSIX
-getenv() - Part of standard C library (C89/C99) - available everywhere
-setenv()/unsetenv() - Part of POSIX standard - only on Unix-like systems
-*/
 #ifdef WIN32
-void set_env_var( const std::string &name, const std::string &value )
-{
-    _putenv_s( name.c_str(), value.c_str() );
-}
-
 std::string to_os_path( std::string linux_path )
 {
     return convert_linux_path_to_windows_path( linux_path );
-}
-
-void unset_env_var( const std::string &name )
-{
-    _putenv_s( name.c_str(), "" );
 }
 #else
 std::string to_os_path( std::string linux_path )
 {
     return linux_path;
-}
-
-void set_env_var( const std::string &name, const std::string &value )
-{
-    setenv( name.c_str(), value.c_str(), 1 );
-}
-
-void unset_env_var( const std::string &name )
-{
-    unsetenv( name.c_str() );
 }
 #endif
 
@@ -2154,6 +2130,46 @@ void test_main_no_files_processed()
     ASSERT_NOT_CONTAINS( output, "Processing file" );
 }
 
+void test_fetch_missing_metadata()
+{
+    std::cout << std::endl << "test_fetch_missing_metadata()" << std::endl;
+
+#if defined( WIN32 ) || defined( WIN64 )
+    const char *exiftool_path = "..\\..\\exiftool\\exiftool.exe";
+    set_env_var( "RAWTOACES_EXIFTOOL_PATH", exiftool_path );
+#endif
+
+    rta::util::ImageConverter converter;
+    OIIO::ImageSpec           spec;
+
+    converter.settings.disable_exiftool = true;
+    bool result =
+        fetch_missing_metadata( dng_test_file, converter.settings, spec );
+    OIIO_CHECK_ASSERT( result );
+    OIIO_CHECK_EQUAL( spec.get_string_attribute( "cameraMake" ), "" );
+    OIIO_CHECK_EQUAL( spec.get_string_attribute( "cameraModel" ), "" );
+
+    converter.settings.disable_exiftool = false;
+    result = fetch_missing_metadata( nef_test_file, converter.settings, spec );
+    OIIO_CHECK_ASSERT( result );
+    OIIO_CHECK_EQUAL(
+        spec.get_string_attribute( "cameraMake" ), "NIKON CORPORATION" );
+    OIIO_CHECK_EQUAL(
+        spec.get_string_attribute( "cameraModel" ), "NIKON D200" );
+
+    spec.extra_attribs.remove( "cameraMake" );
+    spec.extra_attribs.remove( "cameraModel" );
+    // The dng doesn't contain these attributes, but the call should not fail.
+    result = fetch_missing_metadata( dng_test_file, converter.settings, spec );
+    OIIO_CHECK_ASSERT( result );
+
+    spec.extra_attribs.remove( "cameraMake" );
+    spec.extra_attribs.remove( "cameraModel" );
+    result =
+        fetch_missing_metadata( "wrong_filename", converter.settings, spec );
+    OIIO_CHECK_ASSERT( !result );
+}
+
 int main( int, char ** )
 {
     try
@@ -2186,6 +2202,8 @@ int main( int, char ** )
         test_fix_metadata_source_missing();
         test_fix_metadata_source_missing();
         test_fix_metadata_unsupported_type();
+
+        test_fetch_missing_metadata();
 
         // Tests for parse_parameters
         test_parse_parameters_list_formats();
